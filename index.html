@@ -74,7 +74,7 @@
 <body>
     <div class="container">
         <h2>Girvi Interest Calculator</h2>
-        <form method="POST">
+        <form id="calc-form">
             <label for="price">Amount (₹):</label>
             <input type="number" id="price" name="price" placeholder="Enter the amount" required>
 
@@ -101,13 +101,11 @@
             <button type="submit">Calculate</button>
         </form>
 
-        {% if total_interest is not none and total_price is not none %}
-        <div class="result">
+        <div id="result" class="result" style="display: none;">
             <h3>Calculation Results:</h3>
-            <p><strong>Interest Obtained:</strong> ₹{{ total_interest|default(0)|round(2) }}</p>
-            <p><strong>Total Price:</strong> ₹{{ total_price|default(0)|round(2) }}</p>
+            <p><strong>Interest Obtained:</strong> ₹<span id="interest"></span></p>
+            <p><strong>Total Price:</strong> ₹<span id="total-price"></span></p>
         </div>
-        {% endif %}
 
         <button class="refresh-button" onclick="location.reload()">Refresh</button>
     </div>
@@ -124,6 +122,47 @@
             const customDeparture = document.getElementById('custom-departure');
             customDeparture.style.display = departureSelect.value === 'custom' ? 'block' : 'none';
         }
+
+        document.getElementById('calc-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const price = parseFloat(document.getElementById('price').value);
+            let rate = document.getElementById('rate').value;
+            if (rate === 'custom') {
+                rate = parseFloat(document.getElementById('custom-rate').value);
+            } else {
+                rate = parseFloat(rate);
+            }
+
+            const arrivalDate = new Date(document.getElementById('arrival').value);
+            let departureDate;
+            const departureType = document.getElementById('departure').value;
+            if (departureType === 'today') {
+                departureDate = new Date();
+            } else if (departureType === 'yesterday') {
+                departureDate = new Date();
+                departureDate.setDate(departureDate.getDate() - 1);
+            } else {
+                departureDate = new Date(document.getElementById('custom-departure').value);
+            }
+
+            // Calculate duration
+            const totalDays = Math.floor((departureDate - arrivalDate) / (1000 * 60 * 60 * 24));
+            const months = Math.floor(totalDays / 30);
+            const days = totalDays % 30;
+
+            // Calculate interest
+            const monthlyInterest = (price * rate) / 100;
+            const totalInterest = months * monthlyInterest + (monthlyInterest / 30) * days;
+
+            // Total price
+            const totalPrice = price + totalInterest;
+
+            // Display the results
+            document.getElementById('interest').innerText = totalInterest.toFixed(2);
+            document.getElementById('total-price').innerText = totalPrice.toFixed(2);
+            document.getElementById('result').style.display = 'block';
+        });
     </script>
 </body>
 </html>
