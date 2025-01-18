@@ -105,6 +105,7 @@
             <h3>Calculation Results:</h3>
             <p><strong>Interest Obtained:</strong> ₹<span id="interest"></span></p>
             <p><strong>Total Price:</strong> ₹<span id="total-price"></span></p>
+            <p><strong>Duration:</strong> <span id="duration"></span></p>
         </div>
 
         <button class="refresh-button" onclick="location.reload()">Refresh</button>
@@ -121,6 +122,30 @@
             const departureSelect = document.getElementById('departure');
             const customDeparture = document.getElementById('custom-departure');
             customDeparture.style.display = departureSelect.value === 'custom' ? 'block' : 'none';
+        }
+
+        function calculateDuration(arrivalDate, departureDate) {
+            const d1 = arrivalDate.getDate();
+            const m1 = arrivalDate.getMonth() + 1; // JavaScript months are 0-based
+            const y1 = arrivalDate.getFullYear();
+
+            const d2 = departureDate.getDate();
+            const m2 = departureDate.getMonth() + 1;
+            const y2 = departureDate.getFullYear();
+
+            const day1 = d1 + m1 * 30 + y1 * 360;
+            const day2 = d2 + m2 * 30 + y2 * 360;
+
+            let months, days;
+            if (day1 > day2) {
+                months = Math.floor((day1 - day2) / 30);
+                days = (day1 - day2) % 30;
+            } else {
+                months = Math.floor((day2 - day1) / 30);
+                days = (day2 - day1) % 30;
+            }
+
+            return { months, days };
         }
 
         document.getElementById('calc-form').addEventListener('submit', function(event) {
@@ -146,21 +171,31 @@
                 departureDate = new Date(document.getElementById('custom-departure').value);
             }
 
-            // Calculate duration
-            const totalDays = Math.floor((departureDate - arrivalDate) / (1000 * 60 * 60 * 24));
-            const months = Math.floor(totalDays / 30);
-            const days = totalDays % 30;
+            const duration = calculateDuration(arrivalDate, departureDate);
+            if (!duration) return;
+
+            const { months, days } = duration;
 
             // Calculate interest
-            const monthlyInterest = (price * rate) / 100;
-            const totalInterest = months * monthlyInterest + (monthlyInterest / 30) * days;
+            const c = (price * rate) / 100;
+
+            let totalInterest;
+            if (days < 30 && months === 0) {
+                totalInterest = c;
+            } else {
+                const t1 = months * c;
+                const t2 = (c / 30) * days;
+                totalInterest = t1 + t2;
+            }
 
             // Total price
             const totalPrice = price + totalInterest;
 
-            // Display the results
+            // Display the result with duration on one line
+            const durationText = `${months} month(s) and ${days} day(s)`; // Format as a single line
             document.getElementById('interest').innerText = totalInterest.toFixed(2);
             document.getElementById('total-price').innerText = totalPrice.toFixed(2);
+            document.getElementById('duration').innerText = durationText;
             document.getElementById('result').style.display = 'block';
         });
     </script>
